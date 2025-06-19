@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xml:space="preserve">
+  <t t-name="product_configurator.BooleanButtonField">
+    <div t-ref="root">
+      <CheckBox
+        id="props.id"
+        value="props.value || false"
+        class="'d-inline-block me-2'"
+        disabled="props.readonly"
+      />
+    </div>
+  </t>
+</templates>

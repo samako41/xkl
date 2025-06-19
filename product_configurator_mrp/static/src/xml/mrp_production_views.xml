@@ -1,0 +1,25 @@
+<odoo>
+    <template id="ConfigListView.buttons" inherit_id="web.ListView.buttons" name="List View Config Button" t-inherit-mode="extension">
+        <xpath expr="//button[contains(@class, 'o_list_button_add')]" position="after">
+            <button
+                type="button"
+                class="btn btn-primary o_list_button_add_config"
+                accesskey="c"
+            >
+                Configure
+            </button>
+        </xpath>
+    </template>
+
+    <template id="ConfigKanbanView.buttons" inherit_id="web.KanbanView.buttons" name="Kanban View Config Button" t-inherit-mode="extension">
+        <xpath expr="//button[contains(@class, 'o_kanban_button_new')]" position="after">
+            <button
+                type="button"
+                class="btn btn-secondary o-kanban-button-new_config"
+                accesskey="c"
+            >
+                Configure
+            </button>
+        </xpath>
+    </template>
+</odoo>
