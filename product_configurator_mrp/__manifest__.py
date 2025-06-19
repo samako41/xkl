@@ -4,7 +4,7 @@
     "version": "18.0.1.0.0",
     "category": "Manufacturing",
     "summary": "BOM Support for configurable products",
-    "author": "Pledra, Odoo Community Association (OCA)",
+    "author": "Olajide Idowu ICIT",
     "license": "AGPL-3",
     "website": "https://github.com/OCA/product-configurator",
     "depends": ["mrp", "product_configurator"],
@@ -28,5 +28,4 @@
     "installable": True,
     "auto_install": False,
     "development_status": "Beta",
-    "maintainers": ["PCatinean"],
 }

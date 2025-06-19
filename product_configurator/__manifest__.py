@@ -3,7 +3,7 @@
     "version": "18.0.1.0.2",
     "category": "Generic Modules/Base",
     "summary": "Base for product configuration interface modules",
-    "author": "Pledra, Odoo Community Association (OCA)",
+    "author": "Olajide Idowu ICIT",
     "license": "AGPL-3",
     "website": "https://github.com/OCA/product-configurator",
     "external_dependencies": {
@@ -46,7 +46,6 @@
     "images": ["static/description/cover.png"],
     "post_init_hook": "post_init_hook",
     "development_status": "Beta",
-    "maintainers": ["PCatinean"],
     "installable": True,
     "application": True,
     "auto_install": False,

@@ -6,12 +6,11 @@
     "version": "18.0.1.0.2",
     "category": "Manufacturing",
     "summary": "BOM Support for sales wizard",
-    "author": "Pledra, Odoo Community Association (OCA)",
+    "author": "Olajide Idowu ICIT",
     "license": "AGPL-3",
     "website": "https://github.com/OCA/product-configurator",
     "depends": ["sale_mrp", "product_configurator_sale", "product_configurator_mrp"],
     "installable": True,
     "auto_install": True,
     "development_status": "Beta",
-    "maintainers": ["PCatinean"],
 }
