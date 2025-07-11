@@ -270,6 +270,8 @@ class ProductAttributeValue(models.Model):
         attachment=True,
         help="Attribute value image (Display on website for radio buttons)",
     )
+    min_qty = fields.Float(string="Minimum Quantity", default=0.0)
+    max_qty = fields.Float(string="Maximum Quantity", default=0.0)
 
     @api.model
     def get_attribute_value_extra_prices(

@@ -25,6 +25,40 @@ class FreeSelection(fields.Selection):
     def convert_to_cache(self, value, record, validate=True):
         return super().convert_to_cache(value=value, record=record, validate=False)
 
+class ProductConfiguratorStepQty(models.TransientModel):
+    _name = "product.configurator.step.qty"
+    _description = "Step-specific Attribute Value Quantities"
+
+    configurator_id = fields.Many2one("product.configurator", required=True, ondelete="cascade")
+    attribute_value_id = fields.Many2one("product.attribute.value", required=True)
+    step_id = fields.Many2one("product.config.step", required=True)
+    qty = fields.Float(string="Quantity", required=True, default=1.0)
+
+class ProductTemplateAttributeLine(models.Model):
+    _inherit = "product.template.attribute.line"
+
+    # Not stored – only so domains like ('config_step_line_id','=', …) work
+    config_step_line_id = fields.Many2one(
+        "product.config.step.line",
+        string="Config Step Line",
+        compute="_compute_config_step_line",
+        store=False,
+    )
+
+    @api.depends("product_tmpl_id.config_step_line_ids.attribute_line_ids")
+    def _compute_config_step_line(self):
+        """
+        For each attribute-line, locate the step-line (if any) that
+        includes it and expose it via this virtual M2O.
+        """
+        step_line_obj = self.env["product.config.step.line"]
+        for line in self:
+            step_line = step_line_obj.search([
+                ("attribute_line_ids", "in", line.id),
+                ("product_tmpl_id", "=", line.product_tmpl_id.id),
+            ], limit=1)
+            line.config_step_line_id = step_line if step_line else False
+
 
 class ProductConfigurator(models.TransientModel):
     _name = "product.configurator"
@@ -201,6 +235,8 @@ class ProductConfigurator(models.TransientModel):
             "weight": weight,
             "price": price,
         }
+
+
 
     def get_form_vals(
         self,
@@ -441,9 +477,104 @@ class ProductConfigurator(models.TransientModel):
     state = FreeSelection(
         selection="get_state_selection", default="select", string="State"
     )
+    step_qty_ids = fields.One2many(
+        "product.configurator.step.qty",
+        "configurator_id",
+        string="Step Quantities"
+    )
+
+    qty = fields.Float(string="Quantity", compute="_compute_qty", inverse="_inverse_qty", store=False)
+
+    def _get_current_step_pair(self):
+        self.ensure_one()
+        if not self.state or self.state == "select":
+            return (False, False)
+        step_line = self.env["product.config.step.line"].browse(int(self.state))
+        step = step_line.config_step_id if step_line else False
+        return (step_line, step)
+
+    @api.depends("step_qty_ids.qty", "state")
+    def _compute_qty(self):
+        for wizard in self:
+            step_line, step = wizard._get_current_step_pair()
+            if not step:
+                wizard.qty = 1.0
+                continue
+            line = wizard.step_qty_ids.filtered(lambda l: l.step_id.id == step.id)
+            wizard.qty = line.qty if line else 1.0
+
+    # def _inverse_qty(self):
+    #     """
+    #     Set the quantity for all attribute values in the current configuration step.
+    #     """
+    #     for wiz in self:
+    #         step_line, step = wiz._get_current_step_pair()
+    #         if not step:
+    #             continue
+    #
+    #         # Every attribute value shown in this step
+    #         step_attr_ids = step_line.attribute_line_ids.mapped("attribute_id")
+    #         step_values = wiz.config_session_id.value_ids.filtered(
+    #             lambda v: v.attribute_id in step_attr_ids
+    #         )
+    #
+    #         # --- FIX (Revision 3) ---
+    #         # Collect all create/update commands in a list first.
+    #         # Assigning to the One2many field inside the loop overwrites previous assignments.
+    #         commands = []
+    #
+    #         for val in step_values:
+    #             line = wiz.step_qty_ids.filtered(
+    #                 lambda l: l.step_id.id == step.id and l.attribute_value_id.id == val.id
+    #             )
+    #             if line:
+    #                 # Use (1, id, {vals}) to update existing records
+    #                 commands.append((1, line.id, {
+    #                     'qty': wiz.qty
+    #                 }))
+    #             else:
+    #                 # Use (0, 0, {vals}) to create new records
+    #                 commands.append((0, 0, {
+    #                     "attribute_value_id": val.id,
+    #                     "step_id": step.id,
+    #                     "qty": wiz.qty,
+    #                 }))
+    #
+    #         # Apply all commands at once to the One2many field.
+    #         # This ensures all records are processed in a single, atomic operation.
+    #         if commands:
+    #             wiz.step_qty_ids = commands
+
+    def _inverse_qty(self):
+        for wiz in self:
+            step_line, step = wiz._get_current_step_pair()
+            if not step:
+                continue
+
+            # every attribute value shown in this step
+            step_attr_ids = step_line.attribute_line_ids.mapped("attribute_id")
+            step_values = wiz.config_session_id.value_ids.filtered(
+                lambda v: v.attribute_id in step_attr_ids
+            )
+
+            # create / update a qty line for EACH value
+            for val in step_values:
+                line = wiz.step_qty_ids.filtered(
+                    lambda l: l.step_id.id == step.id and l.attribute_value_id.id == val.id
+                )
+                if line:
+                    line.qty = wiz.qty
+                else:
+                    wiz.step_qty_ids.create({
+                        "configurator_id": wiz.id,
+                        "attribute_value_id": val.id,
+                        "step_id": step.id,
+                        "qty": wiz.qty,
+                    })
 
     @api.onchange("state")
     def _onchange_state(self):
+
         """Save values when change state of wizard by clicking on statusbar"""
         if self.env.context.get("allow_preset_selection"):
             self = self.with_context(allow_preset_selection=False)
@@ -997,33 +1128,79 @@ class ProductConfigurator(models.TransientModel):
         return super().write(vals)
 
     def action_next_step(self):
-        """Proceeds to the next step of the configuration process. This usually
-        implies the next configuration step (if any) defined via the
-        config_step_line_ids on the product.template.
+        for wiz in self:
+            _logger.warning("action_next_step – wiz=%s state=%s", wiz.id, wiz.state)
+            step_line, step = wiz._get_current_step_pair()
+            if not step:
+                continue
 
-        More importantly it sets metadata on the context
-        variable so the fields_get and fields_view_get methods can generate the
-        appropriate dynamic content"""
-        wizard_action = self.with_context(
-            allow_preset_selection=False
-        ).get_wizard_action(wizard=self)
-
-        if not self.product_tmpl_id:
-            return wizard_action
-
-        if not self.product_tmpl_id.attribute_line_ids:
-            raise ValidationError(
-                _("Product Template does not have any attribute lines defined")
+            step_attr_ids = step_line.attribute_line_ids.mapped("attribute_id")
+            step_values = wiz.config_session_id.value_ids.filtered(
+                lambda v: v.attribute_id in step_attr_ids
             )
-        next_step = self.config_session_id.get_next_step(
+            _logger.warning(" validating %d values for step '%s'", len(step_values), step.name)
+
+            for val in step_values:
+                qty_line = wiz.step_qty_ids.filtered(
+                    lambda q: q.step_id.id == step.id and q.attribute_value_id.id == val.id
+                )
+                # if not qty_line:
+                #     raise ValidationError(_("Please enter quantity for '%s' in this step") % val.name)
+
+                qty = qty_line.qty
+                _logger.warning("  – %s qty=%s min=%s max=%s", val.name, qty, val.min_qty, val.max_qty)
+
+                if val.min_qty and qty < val.min_qty:
+                    raise ValidationError(
+                        _("The quantity for '%s' must be ≥ %s (entered %s)" % (val.name, val.min_qty, qty)))
+                if val.max_qty and qty > val.max_qty:
+                    raise ValidationError(
+                        _("The quantity for '%s' must be ≤ %s (entered %s)" % (val.name, val.max_qty, qty)))
+
+        _logger.warning("Quantities OK – moving to next wizard step")
+
+        action = self.with_context(allow_preset_selection=False).get_wizard_action(wizard=self)
+        if not self.product_tmpl_id:
+            return action
+        if not self.product_tmpl_id.attribute_line_ids:
+            raise ValidationError(_("Product Template does not have any attribute lines defined"))
+
+        next_step_line = self.config_session_id.get_next_step(
             state=self.state,
             product_tmpl_id=self.product_tmpl_id,
             value_ids=self.config_session_id.value_ids,
             custom_value_ids=self.config_session_id.custom_value_ids,
         )
-        if not next_step:
-            return self.action_config_done()
-        return self.open_step(step=next_step)
+        return self.open_step(step=next_step_line) if next_step_line else self.action_config_done()
+
+    # def action_next_step(self):
+    #     """Proceeds to the next step of the configuration process. This usually
+    #     implies the next configuration step (if any) defined via the
+    #     config_step_line_ids on the product.template.
+    #
+    #     More importantly it sets metadata on the context
+    #     variable so the fields_get and fields_view_get methods can generate the
+    #     appropriate dynamic content"""
+    #     wizard_action = self.with_context(
+    #         allow_preset_selection=False
+    #     ).get_wizard_action(wizard=self)
+    #
+    #     if not self.product_tmpl_id:
+    #         return wizard_action
+    #
+    #     if not self.product_tmpl_id.attribute_line_ids:
+    #         raise ValidationError(
+    #             _("Product Template does not have any attribute lines defined")
+    #         )
+    #     next_step = self.config_session_id.get_next_step(
+    #         state=self.state,
+    #         product_tmpl_id=self.product_tmpl_id,
+    #         value_ids=self.config_session_id.value_ids,
+    #         custom_value_ids=self.config_session_id.custom_value_ids,
+    #     )
+    #     if not next_step:
+    #         return self.action_config_done()
+    #     return self.open_step(step=next_step)
 
     def action_previous_step(self):
         """Proceeds to the next step of the configuration process. This usually
@@ -1123,13 +1300,7 @@ class ProductConfigurator(models.TransientModel):
     def action_config_done(self):
         """This method is for the final step which will be taken care by a
         separate module"""
-        # This try except is too generic.
-        # The create_variant routine could effectively fail for
-        # a large number of reasons, including bad programming.
-        # It should be refactored.
-        # In the meantime, at least make sure that a validation
-        # error legitimately raised in a nested routine
-        # is passed through.
+
         step_to_open = self.config_session_id.check_and_open_incomplete_step()
         if step_to_open:
             return self.open_step(step_to_open)
@@ -1167,4 +1338,5 @@ class ProductConfigurator(models.TransientModel):
 #     )
 #     value = fields.Char(string="Value")
 #     wizard_id = fields.Many2one(comodel_name="product.configurator", string="Wizard")
+
 # TODO: Current value ids to save frontend/backend session?
