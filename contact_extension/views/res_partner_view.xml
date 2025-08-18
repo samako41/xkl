@@ -1,0 +1,29 @@
+<?xml version="1.0" ?>
+<odoo>
+    <record id="view_res_partner_form_inherit_apvendor" model="ir.ui.view">
+        <field name="name">res.partner.form.apvendor</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//page[@name='internal_notes']" position="before">
+                <page string="Minx Extra Fields">
+                    <group>
+                        <field name="payment_hold_status"/>
+                        <field name="payment_priority"/>
+<!--                        <field name="bank_code"/>-->
+                        <field name="fax"/>
+                        <field name="ap_distribution_acct"/>
+                        <field name="vendor_note_code"/>
+<!--                        <field name="credit_limit_vendor"/>-->
+                        <field name="vendor_inactive_flag"/>
+                    </group>
+                    <group>
+
+                    </group>
+                </page>
+            </xpath>
+
+        </field>
+    </record>
+</odoo>
