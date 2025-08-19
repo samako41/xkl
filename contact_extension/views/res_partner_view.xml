@@ -8,18 +8,31 @@
 
             <xpath expr="//page[@name='internal_notes']" position="before">
                 <page string="Minx Extra Fields">
-                    <group>
-                        <field name="payment_hold_status"/>
-                        <field name="payment_priority"/>
-<!--                        <field name="bank_code"/>-->
-                        <field name="fax"/>
-                        <field name="ap_distribution_acct"/>
-                        <field name="vendor_note_code"/>
-<!--                        <field name="credit_limit_vendor"/>-->
-                        <field name="vendor_inactive_flag"/>
-                    </group>
-                    <group>
-
+                    <group colspan="2">
+                        <group string="AP Vendor Info">
+                            <field name="payment_hold_status"/>
+                            <field name="payment_priority"/>
+                            <!--                        <field name="bank_code"/>-->
+                            <field name="fax"/>
+                            <field name="ap_distribution_acct"/>
+                            <field name="vendor_note_code"/>
+                            <!--                        <field name="credit_limit_vendor"/>-->
+                            <field name="vendor_inactive_flag"/>
+                        </group>
+                        <group string="AR Customer Info">
+                            <field name="ar_resale_number"/>
+                            <field name="ar_hold_status"/>
+                            <field name="freight_terms_code"/>
+                            <field name="monthly_finance_charge"/>
+                            <field name="credit_review_date"/>
+                            <field name="standard_discount_percent"/>
+                            <field name="arfax"/>
+                            <field name="ups_fedex_number"/>
+                            <field name="bill_freight"/>
+                            <!-- Already exist in Odoo -->
+                            <field name="comment"/>
+                            <field name="tax_code"/>
+                        </group>
                     </group>
                 </page>
             </xpath>

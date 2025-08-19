@@ -41,3 +41,51 @@ class ResPartner(models.Model):
         default='1',
         help="1 = Active, 0 = Inactive"
     )
+
+    ar_resale_number = fields.Char(
+        string="AR Resale Number"
+    )
+
+    ar_hold_status = fields.Boolean(
+        string="AR Hold Status",
+        help="1 = On Hold, 0 = Not on Hold"
+    )
+
+    freight_terms_code = fields.Char(
+        string="Freight Terms Code"
+    )
+
+    monthly_finance_charge = fields.Float(
+        string="Monthly Finance Charge (%)"
+    )
+
+    credit_review_date = fields.Date(
+        string="Credit Review Date"
+    )
+
+    standard_discount_percent = fields.Float(
+        string="Standard Discount (%)"
+    )
+
+    arfax = fields.Char(
+        string="Fax"
+    )
+
+    ups_fedex_number = fields.Char(
+        string="UPS/FedEx #"
+    )
+
+    bill_freight = fields.Selection(
+        [
+            ('P', 'Prepaid'),
+            ('A', 'Prepaid & Add'),
+            ('R', 'Recipient'),
+            ('T', 'Third Party'),
+            ('C', 'Consignee')
+        ],
+        string="Bill Freight"
+    )
+
+    tax_code = fields.Char(
+        string="Tax Code"
+    )
