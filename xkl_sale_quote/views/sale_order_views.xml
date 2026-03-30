@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ── Extend Sale Order Line tree: add Included Components column ── -->
+<!--    <record id="view_order_line_tree_xkl" model="ir.ui.view">-->
+<!--        <field name="name">sale.order.line.tree.xkl</field>-->
+<!--        <field name="model">sale.order.line</field>-->
+<!--        <field name="inherit_id" ref="sale.view_order_line_form2_inherit_sale"/>-->
+<!--        <field name="arch" type="xml">-->
+<!--            <xpath expr="//field[@name='product_id']" position="after">-->
+<!--                <field name="xkl_sub_items"-->
+<!--                       string="Included Components"-->
+<!--                       optional="show"-->
+<!--                       placeholder="One component per line (printed as bullets in PDF)"/>-->
+<!--            </xpath>-->
+<!--        </field>-->
+<!--    </record>-->
+
+    <!-- ── Extend Sale Order form: Print button + XKL Proposal tab ── -->
+    <record id="view_order_form_xkl" model="ir.ui.view">
+        <field name="name">sale.order.form.xkl</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Print button in the header status bar -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_print_xkl_proposal"
+                        type="object"
+                        string="🖨 Print XKL Proposal"
+                        class="oe_stat_button"
+                        icon="fa-file-pdf-o"/>
+            </xpath>
+
+            <!-- XKL Proposal tab inserted after the "Other Info" tab -->
+            <xpath expr="//notebook" position="inside">
+                <page string="XKL Proposal" name="xkl_proposal">
+                    <group string="Quote Meta">
+                        <group>
+                            <field name="xkl_proposal_title"/>
+                            <field name="xkl_proposal_date"/>
+                            <field name="xkl_quote_number"/>
+                        </group>
+                        <group>
+                            <field name="xkl_xkl_contact"/>
+                        </group>
+                    </group>
+
+                    <separator string="Page 2 — Introduction"/>
+                    <group>
+                        <field name="xkl_intro_body"
+                               widget="html"
+                               string="Introduction Body"
+                               colspan="2"
+                               nolabel="1"/>
+                    </group>
+
+                    <separator string="Page 2 — Strategic Objectives"/>
+                    <group>
+                        <field name="xkl_objectives_intro" string="Intro Sentence" colspan="2"/>
+                        <field name="xkl_objective_1" string="Objective 1" colspan="2"/>
+                        <field name="xkl_objective_2" string="Objective 2" colspan="2"/>
+                        <field name="xkl_objective_3" string="Objective 3 (optional)" colspan="2"/>
+                    </group>
+
+                    <separator string="Page 2 — Conclusion"/>
+                    <group>
+                        <field name="xkl_conclusion_body"
+                               widget="html"
+                               string="Conclusion Body"
+                               colspan="2"
+                               nolabel="1"/>
+                    </group>
+
+                    <separator string="Page 3 — XKL History &amp; Reliability"/>
+                    <group>
+                        <field name="xkl_history_body"
+                               widget="html"
+                               string="History Body"
+                               colspan="2"
+                               nolabel="1"/>
+                        <field name="xkl_warranty_highlight" string="Warranty Highlight" colspan="2"/>
+                    </group>
+
+                    <separator string="Page 4 — Customer Requirements"/>
+                    <group>
+                        <group>
+                            <field name="xkl_req_sites" string="Sites"/>
+                            <field name="xkl_req_circuit" string="Circuit Specification"/>
+                            <field name="xkl_req_handoff" string="Client Handoff"/>
+                        </group>
+                        <group>
+                            <field name="xkl_req_otdr" string="OTDR Requirement"/>
+                            <field name="xkl_req_distance" string="Link Distance"/>
+                            <field name="xkl_req_extra" string="Additional Requirements (optional)"/>
+                        </group>
+                    </group>
+
+                    <separator string="Page 5 — Customised Solution"/>
+                    <group>
+                        <field name="xkl_solution_body"
+                               widget="html"
+                               string="Solution Description"
+                               colspan="2"
+                               nolabel="1"/>
+                        <field name="xkl_solution_link_distance" string="Supported Link Distance" colspan="2"/>
+                        <field name="xkl_solution_note" string="Technical Note" colspan="2"/>
+                    </group>
+
+                    <separator string="Page 6 — Future Upgrades"/>
+                    <group>
+                        <field name="xkl_upgrade_body"
+                               widget="html"
+                               string="Upgrade Description"
+                               colspan="2"
+                               nolabel="1"/>
+                        <field name="xkl_bert_note" string="BERT / System Highlight" colspan="2"/>
+                    </group>
+
+                    <separator string="Page 7 — Sales Order Additions"/>
+                    <group>
+                        <field name="xkl_so_includes"
+                               widget="html"
+                               string="Total Includes"
+                               colspan="2"
+                               nolabel="1"/>
+                        <field name="xkl_so_notes"
+                               widget="html"
+                               string="Order Notes"
+                               colspan="2"
+                               nolabel="1"/>
+                        <field name="xkl_cost_per_100g"
+                               string="Cost per 100G Circuit (computed)"
+                               readonly="1"
+                               colspan="2"/>
+                    </group>
+
+                </page>
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>
